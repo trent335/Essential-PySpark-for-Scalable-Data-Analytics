@@ -1,0 +1,23 @@
+lines = sc.textFile("databricks-datasets/README.md")
+words = lines.flatMap(lambda s: s.split(" "))
+word_tuples - words.map(lambda s: (s,1))
+word_count = word_tuples.reduceByKey(lambda x, y: x + y)
+word_count.take(10)
+word_count.saveAsTextfile("tmp/wordcount.txt")
+
+from pyspark.sql.functions import split, explode
+linesDF = spark.read.text("/databricks-datasets/README.md")
+wordListDf = linesDf.select(split("value", " ").alias("words"))
+wordsDF = wordListDf.select(explode("words").alias("word"))
+wordCountDf = wordsDf.groupBy("word").count()
+wordCountDf.show()
+wordCountDf.write.csv("/tmp/wordcounts.csv")
+
+CREATE TABLE word_counts (word STRING)
+USING csv
+OPTIONS ("delimiter"=" ")
+LOCATION "/databricks-datasets/README.md"
+
+SELECT word, COUNT(word) AS count
+FROM word_counts
+GROPU BY word
